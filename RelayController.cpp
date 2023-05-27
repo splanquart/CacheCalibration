@@ -31,8 +31,14 @@ void RelayController::loadOrInitializeEEPROM() {
   }
 }
 void RelayController::loadStateFromEEPROM() {
+  Serial.println("Load state of relay");
   for (int i = 0; i < _numRelays; i++) {
     _relayStates[i] = EEPROM.read(2 + i) == 1;
+    Serial.print("  Relay ");
+    Serial.print(i);
+    Serial.print(" -> ");
+    Serial.println(_relayStates[i]);
+ 
 
     _relayNames[i] = "";
     for (int j = 0; j < 50; j++) {
@@ -64,8 +70,6 @@ void RelayController::setRelayState(int relayNum, bool state) {
   if (relayNum < 0 || relayNum >= _numRelays) {
     Serial.print("Invalid relay number: ");
     Serial.println(relayNum);
-    EEPROM.write(2 + relayNum, state ? 1 : 0);
-    EEPROM.commit();
     return;
   }
   
@@ -76,6 +80,8 @@ void RelayController::setRelayState(int relayNum, bool state) {
   
   _relayStates[relayNum] = state;
   sendCommand(relayNum, state?1:0);
+  EEPROM.write(2 + relayNum, state ? 1 : 0);
+  EEPROM.commit();
 }
 
 bool RelayController::getRelayState(int relayNum) {
