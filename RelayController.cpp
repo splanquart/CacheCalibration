@@ -34,6 +34,7 @@ void RelayController::loadStateFromEEPROM() {
   Serial.println("Load state of relay");
   for (int i = 0; i < _numRelays; i++) {
     _relayStates[i] = EEPROM.read(2 + i) == 1;
+    sendCommand(i, _relayStates[i]?1:0);
     Serial.print("  Relay ");
     Serial.print(i);
     Serial.print(" -> ");

@@ -36,6 +36,7 @@ void AlpacaDriver::begin() {
   _server.on("/api/v1/switch/0/canwrite", HTTP_GET, std::bind(&AlpacaDriver::handleCanwritesGet, this));
   _server.on("/api/v1/switch/0/getswitchname", HTTP_GET, std::bind(&AlpacaDriver::handleSwitchnameGet, this));
   _server.on("/api/v1/switch/0/getswitchdescription", HTTP_GET, std::bind(&AlpacaDriver::handleSwitchdescriptionGet, this));
+  _server.on("/api/v1/switch/0/getswitch", HTTP_GET, std::bind(&AlpacaDriver::handleSwitchGet, this));
 
   _server.on("/api/v1/switch/0/getswitchvalue", HTTP_GET, std::bind(&AlpacaDriver::handleSwitchvalueGet, this));
   _server.on("/api/v1/switch/0/maxswitchvalue", HTTP_GET, std::bind(&AlpacaDriver::handleMaxswitchvalueGet, this));
@@ -43,6 +44,8 @@ void AlpacaDriver::begin() {
   _server.on("/api/v1/switch/0/switchstep", HTTP_GET, std::bind(&AlpacaDriver::handleSwitchstepGet, this));
   _server.on("/api/v1/switch/0/setswitchvalue", HTTP_PUT, std::bind(&AlpacaDriver::handleSwitchvaluePut, this));
   _server.on("/api/v1/switch/0/setswitchname", HTTP_PUT, std::bind(&AlpacaDriver::handleSwitchnamePut, this));
+  _server.on("/api/v1/switch/0/setswitch", HTTP_PUT, std::bind(&AlpacaDriver::handleSwitchPut, this));
+
 
   _server.on("/setup", HTTP_GET, std::bind(&AlpacaDriver::handleSetup, this));
   _server.on("/setup/v1/switch/0/setup", HTTP_GET, std::bind(&AlpacaDriver::handleSetupdevice, this));
@@ -103,6 +106,28 @@ void AlpacaDriver::handlerNotFound(){
   Serial.println("----------");
   _server.send(404, "text/plain", "Not found");
 }
+String AlpacaDriver::getHTTPMethodName() {
+  switch (_server.method()) {
+    case HTTP_GET:     return "GET";
+    case HTTP_POST:    return "POST";
+    case HTTP_DELETE:  return "DELETE";
+    case HTTP_PUT:     return "PUT";
+    case HTTP_PATCH:   return "PATCH";
+    case HTTP_HEAD:    return "HEAD";
+    case HTTP_OPTIONS: return "OPTIONS";
+    default:           return "UNKNOWN";
+  }
+}
+void AlpacaDriver::logRequest(const String& callerName) {
+  Serial.print(getHTTPMethodName());
+  Serial.print(" ");
+  Serial.print(_server.uri());
+  if(callerName!=""){
+    Serial.print(" -> ");
+    Serial.print(callerName);
+  }
+  Serial.println();
+}
 void AlpacaDriver::returnResponse(DynamicJsonDocument val) {
   int clientID = (uint32_t)_server.arg("ClientID").toInt();
   int transID = (uint32_t)_server.arg("ClientTransactionID").toInt();
@@ -113,10 +138,6 @@ void AlpacaDriver::returnResponse(DynamicJsonDocument val) {
       transID = (uint32_t)_server.arg(i).toInt();
     }
   }
-  Serial.print("    | clientId: ");
-  Serial.println(clientID);
-  Serial.print("    | clientTransactionId: ");
-  Serial.println(transID);
   
   DynamicJsonDocument doc(1024);
   doc["Value"] = val;
@@ -128,7 +149,7 @@ void AlpacaDriver::returnResponse(DynamicJsonDocument val) {
   String response;
   serializeJson(doc, response);
   _server.send(200, _content_type, response); // envoie la réponse JSON au client Alpaca
-  Serial.print("    | ");
+  Serial.print("    >>>> ");
   Serial.println(response);
 }
 void AlpacaDriver::returnBoolValue(bool val, String errMsg, int errNr) {
@@ -141,10 +162,6 @@ void AlpacaDriver::returnBoolValue(bool val, String errMsg, int errNr) {
       transID = (uint32_t)_server.arg(i).toInt();
     }
   }
-  Serial.print("    | clientId: ");
-  Serial.println(clientID);
-  Serial.print("    | clientTransactionId: ");
-  Serial.println(transID);
   
   DynamicJsonDocument doc(1024);
   
@@ -158,7 +175,7 @@ void AlpacaDriver::returnBoolValue(bool val, String errMsg, int errNr) {
   serializeJson(doc, response);
   
   _server.send(200, _content_type, response);
-  Serial.print("    | ");
+  Serial.print("    >>>> ");
   Serial.println(response);
 }
 void AlpacaDriver::returnNothing(String errMsg, int errNr) {
@@ -171,10 +188,6 @@ void AlpacaDriver::returnNothing(String errMsg, int errNr) {
       transID = (uint32_t)_server.arg(i).toInt();
     }
   }
-  Serial.print("    | clientId: ");
-  Serial.println(clientID);
-  Serial.print("    | clientTransactionId: ");
-  Serial.println(transID);
   
   DynamicJsonDocument doc(1024);
   
@@ -187,7 +200,7 @@ void AlpacaDriver::returnNothing(String errMsg, int errNr) {
   serializeJson(doc, response);
   
   _server.send(200, _content_type, response);
-  Serial.print("    | ");
+  Serial.print("    >>>> ");
   Serial.println(response);
 }
 void AlpacaDriver::returnStringValue(String val, String errMsg, int errNr) {
@@ -200,10 +213,6 @@ void AlpacaDriver::returnStringValue(String val, String errMsg, int errNr) {
       transID = (uint32_t)_server.arg(i).toInt();
     }
   }
-  Serial.print("    | clientId: ");
-  Serial.println(clientID);
-  Serial.print("    | clientTransactionId: ");
-  Serial.println(transID);
   
   DynamicJsonDocument doc(1024);
   
@@ -217,7 +226,7 @@ void AlpacaDriver::returnStringValue(String val, String errMsg, int errNr) {
   serializeJson(doc, response);
   
   _server.send(200, _content_type, response);
-  Serial.print("    | ");
+  Serial.print("    >>>> ");
   Serial.println(response);
 }
 void AlpacaDriver::returnIntValue(int val, String errMsg, int errNr) {
@@ -230,10 +239,7 @@ void AlpacaDriver::returnIntValue(int val, String errMsg, int errNr) {
       transID = (uint32_t)_server.arg(i).toInt();
     }
   }
-  Serial.print("    | clientId: ");
-  Serial.println(clientID);
-  Serial.print("    | clientTransactionId: ");
-  Serial.println(transID);
+
   
   DynamicJsonDocument doc(1024);
   
@@ -247,14 +253,21 @@ void AlpacaDriver::returnIntValue(int val, String errMsg, int errNr) {
   serializeJson(doc, response);
   
   _server.send(200, _content_type, response);
-  Serial.print("    | ");
+  Serial.print("    >>>> ");
   Serial.println(response);
 }
 
+String AlpacaDriver::getArgCaseInsensitive(const String& argName) {
+    for (uint8_t i = 0; i < _server.args(); i++) {
+        if (_server.argName(i).equalsIgnoreCase(argName)) {
+            return _server.arg(i);
+        }
+    }
+    return String();  // Retourner une chaîne vide si aucun argument correspondant n'est trouvé
+}
+
 void AlpacaDriver::handleGetDevices(){
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.println("handleGetDevices");
+  logRequest(__func__);
   StaticJsonDocument<512> doc;
   JsonObject root = doc.to<JsonObject>();
   root["DeviceType"] = _alpacaDeviceType;
@@ -264,14 +277,13 @@ void AlpacaDriver::handleGetDevices(){
 
   String response;
   serializeJson(doc, response);
+  Serial.print("    >>>> ");
   Serial.println(response);
   _server.send(200, _content_type, response);
 }
 
 void AlpacaDriver::handleAPIVersions() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.println("handleAPIVersions");
+  logRequest(__func__);
   //String responseJson = "{\"ServerVersion\":\"1.0\",\"SupportedVersions\":[1]}";
   //_server.send(200, _content_type, responseJson);
   const size_t CAPACITY = JSON_ARRAY_SIZE(5);
@@ -282,11 +294,7 @@ void AlpacaDriver::handleAPIVersions() {
 
 }
 void AlpacaDriver::handleDescription() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.println("handleDescription");
-
-  
+  logRequest(__func__);
   DynamicJsonDocument val(1024);
 
   val["ServerName"] = _description;
@@ -302,10 +310,7 @@ void AlpacaDriver::handleDescription() {
 
 }
 void AlpacaDriver::handleConfiguredDevices() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.println("handleConfiguredDevices");
-
+  logRequest(__func__);
   DynamicJsonDocument val(1024);
   val["DeviceName"] = _deviceName;
   val["DeviceType"] = _alpacaDeviceType;
@@ -320,11 +325,8 @@ void AlpacaDriver::handleConfiguredDevices() {
 }
 
 void AlpacaDriver::handleConnected(){
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleConnected ");
+  logRequest(__func__);
   if (_server.method() == HTTP_GET) {
-    Serial.print("GET");
     returnBoolValue(_controller->is_connected(), "", 0);  
   }
   else if (_server.method() == HTTP_PUT) {
@@ -336,51 +338,36 @@ void AlpacaDriver::handleConnected(){
       }
     }
     _controller->do_connect(connected);
-    Serial.print("PUT");
     returnBoolValue(_controller->is_connected(), "", 0); 
   }
   Serial.println("");
 }
 void AlpacaDriver::handleDescriptionGet() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleDescriptionGet ");
+  logRequest(__func__);
   returnStringValue(_description, "", 0);
 }
 void AlpacaDriver::handleNameGet() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleDescriptionGet ");
+  logRequest(__func__);
   returnStringValue(_deviceName, "", 0);
 }
 void AlpacaDriver::handleDriverinfoGet() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleDriverinfoGet ");
+  logRequest(__func__);
   returnStringValue(_description, "", 0);
 }
 void AlpacaDriver::handleDriverversionGet() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleDriverversionGet ");
+  logRequest(__func__);
   returnStringValue(_driverVersion, "", 0);
 }
 void AlpacaDriver::handleInterfaceVersionGet() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleInterfaceVersionGet ");
+  logRequest(__func__);
   returnIntValue(_interfaceVersion, "", 0);
 }
 void AlpacaDriver::handleMaxswitchGet() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleMaxswitchGet ");
+  logRequest(__func__);
   returnIntValue(_controller->getMaxSwitch(), "", 0);
 }
 void AlpacaDriver::handleSupportedactionsGet() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleMaxswitchGet ");
+  logRequest(__func__);
   const size_t CAPACITY = JSON_ARRAY_SIZE(5);
   StaticJsonDocument<CAPACITY> devices;
   JsonArray array = devices.to<JsonArray>();
@@ -389,125 +376,127 @@ void AlpacaDriver::handleSupportedactionsGet() {
   returnResponse(array);
 }
 void AlpacaDriver::handleCanwritesGet() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.println("handleCanwritesGet ");
+  logRequest(__func__);
   returnBoolValue(true, "", 0); 
 
 }
 void AlpacaDriver::handleSwitchnameGet() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleSwitchnameGet ");
-  int id = (uint32_t)_server.arg("ID").toInt();
+  logRequest(__func__);
+  int id = getArgCaseInsensitive("id").toInt();
 
-  Serial.print("Id: ");
+  Serial.print("    | Id: ");
   Serial.println(id);
   returnStringValue(_controller->getName(id), "", 0);
   Serial.println();
 }
+
+void AlpacaDriver::handleSwitchGet() {
+  logRequest(__func__);
+  int id = getArgCaseInsensitive("id").toInt();
+
+  Serial.print("    | Id: ");
+  Serial.println(id);
+  returnBoolValue(_controller->getRelayState(id), "", 0);
+  Serial.println();
+}
+
 void AlpacaDriver::handleSwitchdescriptionGet() { 
 
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleSwitchdescriptionGet ");
-  int id = (uint32_t)_server.arg("ID").toInt();
+  logRequest(__func__);
+  int id = getArgCaseInsensitive("id").toInt();
 
-  Serial.print("Id: ");
+  Serial.print("    | Id: ");
   Serial.println(id);
   returnStringValue(_controller->getName(id) + " description", "", 0);
   Serial.println();
 }
 void AlpacaDriver::handleSwitchvalueGet() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleSwitchvalueGet ");
-  int id = (uint32_t)_server.arg("ID").toInt();
+  logRequest(__func__);
+  int id = getArgCaseInsensitive("id").toInt();
 
-  Serial.print("Id: ");
+  Serial.print("    | Id: ");
   Serial.println(id);
   returnIntValue(_controller->getRelayState(id)?1:0, "", 0);
   Serial.println();
 }
 void AlpacaDriver::handleMaxswitchvalueGet() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleMaxswitchvalueGet ");
-  int id = (uint32_t)_server.arg("ID").toInt();
+  logRequest(__func__);
+  int id = getArgCaseInsensitive("id").toInt();
 
-  Serial.print("Id: ");
+  Serial.print("    | Id: ");
   Serial.println(id);
   returnIntValue(1, "", 0);
   Serial.println();
 }
 void AlpacaDriver::handleMinswitchvalueGet() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleMinswitchvalueGet ");
-  int id = (uint32_t)_server.arg("ID").toInt();
+  logRequest(__func__);
+  int id = getArgCaseInsensitive("id").toInt();
 
-  Serial.print("Id: ");
+  Serial.print("    | Id: ");
   Serial.println(id);
   returnIntValue(0, "", 0);
   Serial.println();
 }
 void AlpacaDriver::handleSwitchstepGet() {  
+  logRequest(__func__);
+  int id = getArgCaseInsensitive("id").toInt();
 
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleSwitchstepGet ");
-
-  int id = (uint32_t)_server.arg("ID").toInt();
-
-  Serial.print("Id: ");
+  Serial.print("    | Id: ");
   Serial.println(id);
   returnIntValue(1, "", 0);
   Serial.println();
 }
 void AlpacaDriver::handleSwitchvaluePut() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleSwitchvaluePut ");
-
+  logRequest(__func__);
   if (_server.method() == HTTP_PUT) {
-    Serial.println("PUT");
-    int id = (uint32_t)_server.arg("ID").toInt();
+    int id = getArgCaseInsensitive("id").toInt();
     int value = (uint32_t)_server.arg("Value").toInt();
-    Serial.print("Id: ");
+    Serial.print("    | Id: ");
     Serial.println(id);
     _controller->setRelayState(id, value==1);
     returnNothing("", 0);
   }
 }
-void AlpacaDriver::handleSwitchnamePut() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleSwitchnamePut ");
+void AlpacaDriver::handleSwitchPut() {
+  logRequest(__func__);
 
   if (_server.method() == HTTP_PUT) {
-    Serial.println("PUT");
-    int id = (uint32_t)_server.arg("ID").toInt();
+    int id = getArgCaseInsensitive("id").toInt();
+    String state = getArgCaseInsensitive("State");
+    Serial.print("    | Id: ");
+    Serial.print(id);
+    Serial.print("  State: ");
+    Serial.println(state);
+    if(state=="True") {
+      _controller->setRelayState(id, 1);
+    } else {
+      _controller->setRelayState(id, 0);
+    }
+    returnNothing("", 0);
+  }
+}
+void AlpacaDriver::handleSwitchnamePut() {
+  logRequest(__func__);
+
+  if (_server.method() == HTTP_PUT) {
+    int id = getArgCaseInsensitive("id").toInt();
     String value = _server.arg("Value");
-    Serial.print("Id: ");
+    Serial.print("    | Id: ");
     Serial.println(id);
-    Serial.print("Value: ");
+    Serial.print("    | Value: ");
     Serial.println(value);
     _controller->setName(id, value);
     returnNothing("", 0);
   }
 }
 void AlpacaDriver::handleSetup() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleSetup ");
+  logRequest(__func__);
   String response = "<html><body>Setup main page<br/><a href=\"/setup/v1/switch/0/setup\">Configuration Switch 0</a></body></html>";
   _server.send(200, _content_type_html, response); // envoie la réponse JSON au client Alpaca
 
 }
 void AlpacaDriver::handleSetupdevice() {
-  Serial.print(_server.uri());
-  Serial.print(" -> ");
-  Serial.print("handleSetupdevice ");
+  logRequest(__func__);
   String response = "<html><body>Setup Switch 0<br/></body></html>";
   _server.sendContent("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
   _server.sendContent("<meta charset=\"UTF-8\"><html><body><ul>");

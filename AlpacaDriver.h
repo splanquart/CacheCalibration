@@ -48,6 +48,7 @@ public:
   void handleSupportedactionsGet();
   void handleCanwritesGet();
   void handleSwitchnameGet();
+  void handleSwitchGet();
   void handleSwitchdescriptionGet();
   void handleSwitchvalueGet();
   void handleMaxswitchvalueGet();
@@ -55,6 +56,7 @@ public:
   void handleSwitchstepGet();
   void handleSwitchvaluePut();
   void handleSwitchnamePut();
+  void handleSwitchPut();
 
   /*
    * Implement route about Alapaca setup
@@ -93,7 +95,10 @@ private:
   void returnStringValue(String val, String errMsg, int errNr);
   void returnIntValue(int val, String errMsg, int errNr);
   void returnNothing(String errMsg, int errNr);
-  
+  String getArgCaseInsensitive(const String& argName);
+  String getHTTPMethodName();
+  void logRequest(const String& callerName);
+
 };
 
 #endif // ALPACADRIVER_H
