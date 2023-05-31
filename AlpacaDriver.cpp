@@ -463,11 +463,12 @@ void AlpacaDriver::handleSwitchPut() {
   if (_server.method() == HTTP_PUT) {
     int id = getArgCaseInsensitive("id").toInt();
     String state = getArgCaseInsensitive("State");
+    state.toLowerCase();
     Serial.print("    | Id: ");
     Serial.print(id);
     Serial.print("  State: ");
     Serial.println(state);
-    if(state=="True") {
+    if(state=="true") {
       _controller->setRelayState(id, 1);
     } else {
       _controller->setRelayState(id, 0);
@@ -501,6 +502,7 @@ void AlpacaDriver::handleSetupdevice() {
   _server.sendContent("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
   _server.sendContent("<meta charset=\"UTF-8\"><html><body><ul>");
   _server.sendContent("<h1>Configuration of Switch 0</h1>");
+  _server.sendContent("<ul>");
   for(int i=0;i<_controller->getMaxSwitch();i++) {
     _server.sendContent("<li>");
     _server.sendContent("<form onsubmit='event.preventDefault(); updateRelayName(this, " + String(i) + ");'>");
@@ -508,9 +510,16 @@ void AlpacaDriver::handleSetupdevice() {
     _server.sendContent("<input type='text' id='relayName' name='relayName' value='" + _controller->getName(i) + "'>");
     _server.sendContent("<input type='submit' value='Update'>");
     _server.sendContent("</form>");
+
+    _server.sendContent("<button type='button' onclick='setRelayState("
+        + String(i) + ", \"true\")'>On</button> ");
+    _server.sendContent("<button type='button' onclick='setRelayState("
+        + String(i) + ", \"false\")'>Off</button> ");
+
     _server.sendContent("</li>");    
 
   }
+  _server.sendContent("</ul>");
   _server.sendContent("<script>"
                    "async function updateRelayName(form, relayNumber) {"
                    "  const relayName = form.relayName.value;"
@@ -524,5 +533,13 @@ void AlpacaDriver::handleSetupdevice() {
                    "  }"
                    "}"
                    "</script>");
-  _server.sendContent("</ul></body></html>");
+  _server.sendContent("<script>"
+        "function setRelayState(relayNum, state) {"
+        "var xhr = new XMLHttpRequest();"
+        "xhr.open('PUT', '/api/v1/switch/0/setswitch', true);"
+        "xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');"
+        "xhr.send('Id=' + relayNum + '&State=' + state);"
+        "}"
+        "</script>");
+  _server.sendContent("</body></html>");
 }
