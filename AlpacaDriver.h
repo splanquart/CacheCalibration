@@ -7,11 +7,11 @@
 #include <ESP8266HTTPUpdateServer.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
+#include "RelayController.h"
 
 #define DISCOVERY_PORT 32227 // port ASCom discovery
 #define ALPACA_PORT 11111 // port ASCom HTTP port
 
-class RelayController;
 
 class AlpacaDriver {
 public:
