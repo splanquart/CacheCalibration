@@ -1,12 +1,22 @@
 #include "RelayController.h"
+#include "AlpacaDriver.h"
+#include "HttpHandler.h"
+#include "AlpacaSwitchDevice.h"
 
 #include <WiFiManager.h>
 #include <DNSServer.h>
+
+#define ALPACA_PORT 11111
+
 
 const int maxSwitch = 4;
 RelayController *relay;
 AlpacaDriver *driver;
 ESP8266WebServer server(80);
+
+HttpHandler httpHandler(ALPACA_PORT);
+AlpacaSwitchDevice *alpacaSwitch;
+
 
 void handleReset() {
   WiFi.disconnect(true); // Reset WiFi credentials
@@ -38,9 +48,13 @@ void setup() {
   server.begin();
   
   relay = new RelayController(maxSwitch);
-  driver = new AlpacaDriver(relay, 0);
+  driver = new AlpacaDriver(httpHandler, relay, 0);
+  alpacaSwitch = new AlpacaSwitchDevice(httpHandler, 0, relay); // DeviceId est 0
+  driver->addDevice(alpacaSwitch);
+
 
   driver->begin();
+  alpacaSwitch->begin();
 }
 
 void loop() {
