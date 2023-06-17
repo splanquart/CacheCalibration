@@ -18,7 +18,7 @@
 
 class AlpacaDriver {
 public:
-  AlpacaDriver(HttpHandler &server, RelayController* controller, int deviceId);
+  AlpacaDriver(HttpHandler &server);
 
   void begin();
   void addDevice(AlpacaDevice* device);

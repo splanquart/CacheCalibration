@@ -4,19 +4,20 @@
 #define EEPROM_SCHEMA_VERSION 1  // Increase this whenever you change the number of relays or the format of the stored data
 
 #include <Arduino.h>
+#include "ISwitch.h"
 
-class RelayController {
+class RelayController : public ISwitch {
 public:
   RelayController(int numRelays);
   ~RelayController();
 
-  void setRelayState(int relayNum, bool state);
-  bool getRelayState(int relayNum);
-  bool is_connected();
-  void do_connect(bool status=true);
-  int getMaxSwitch();
-  String getName(int relay);
-  void setName(int relay, String value);
+  void setState(int relayNum, bool state);
+  bool getState(int relayNum) const override;
+  bool isConnected() const override;
+  void connect(bool status=true) override;
+  int getMaxSwitch() const override;
+  String getName(int relay) const override;
+  void setName(int relay, String value) override;
 
 private:
   int _numRelays;

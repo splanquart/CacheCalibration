@@ -1,11 +1,8 @@
 #include "AlpacaDriver.h"
-#include "RelayController.h"
 
 
-AlpacaDriver::AlpacaDriver(HttpHandler &server, RelayController* controller, int deviceId)
-    : _controller(controller),
-      _deviceId(deviceId),
-      _server(server) {}
+AlpacaDriver::AlpacaDriver(HttpHandler &server)
+    : _server(server) {}
 
 void AlpacaDriver::begin() {
   _udp.begin(DISCOVERY_PORT);

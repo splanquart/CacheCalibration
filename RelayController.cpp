@@ -17,7 +17,7 @@ void RelayController::loadOrInitializeEEPROM() {
     // Config version or number of relays doesn't match, initialize with default values
     Serial.println("Initialize relay name and EEPROM");
     for (int i = 0; i < _numRelays; i++) {
-      setRelayState(i, false);
+      setState(i, false);
       setName(i, String("Relay ") + (i+1));
       _relayDescriptions[i] = String("Relay ") + (i+1);
     }
@@ -51,10 +51,10 @@ void RelayController::loadStateFromEEPROM() {
     }
   }
 }
-bool RelayController::is_connected() {
+bool RelayController::isConnected() const {
   return _connected;
 }
-void RelayController::do_connect(bool status) {
+void RelayController::connect(bool status) {
   _connected = status;
 }
 RelayController::~RelayController() {
@@ -63,11 +63,11 @@ RelayController::~RelayController() {
   delete[] _relayDescriptions;
   EEPROM.end();
 }
-int RelayController::getMaxSwitch() {
+int RelayController::getMaxSwitch() const {
   return _numRelays;
 }
 
-void RelayController::setRelayState(int relayNum, bool state) {
+void RelayController::setState(int relayNum, bool state) {
   if (relayNum < 0 || relayNum >= _numRelays) {
     Serial.print("Invalid relay number: ");
     Serial.println(relayNum);
@@ -85,7 +85,7 @@ void RelayController::setRelayState(int relayNum, bool state) {
   EEPROM.commit();
 }
 
-bool RelayController::getRelayState(int relayNum) {
+bool RelayController::getState(int relayNum) const {
   if (relayNum < 0 || relayNum >= _numRelays) {
     Serial.print("Invalid relay number: ");
     Serial.println(relayNum);
@@ -115,7 +115,7 @@ void RelayController::sendCommand(int relay, int value) {
   
   Serial.write(payload, sizeof(payload));
 }
-String RelayController::getName(int relay) {
+String RelayController::getName(int relay) const {
   if (relay < 0 || relay >= _numRelays) {
     Serial.print("Invalid relay number: ");
     Serial.println(relay);

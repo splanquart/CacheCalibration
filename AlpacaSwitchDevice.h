@@ -2,11 +2,11 @@
 #define ALPACA_SWITCH_DEVICE_H
 
 #include "AlpacaDevice.h"
-#include "RelayController.h"
+#include "ISwitch.h"
 
 class AlpacaSwitchDevice : public AlpacaDevice {
 public:
-  AlpacaSwitchDevice(HttpHandler& server, int deviceNumber, RelayController* relayController);
+  AlpacaSwitchDevice(HttpHandler& server, int deviceNumber, ISwitch* switchController);
 
   // Override generic methods from AlpacaDevice
   void begin() override;
@@ -37,7 +37,7 @@ public:
   void handleSwitchPut();
 
 protected:
-  RelayController* _controller;
+  ISwitch* _controller;
 
   void _doConnect(bool connected) override;
   bool _isConnected() override;

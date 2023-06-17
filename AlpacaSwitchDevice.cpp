@@ -1,7 +1,7 @@
 #include "AlpacaSwitchDevice.h"
 
-AlpacaSwitchDevice::AlpacaSwitchDevice(HttpHandler& server, int deviceNumber, RelayController* relayController)
-  : AlpacaDevice(server, deviceNumber), _controller(relayController) {
+AlpacaSwitchDevice::AlpacaSwitchDevice(HttpHandler& server, int deviceNumber, ISwitch* switchController)
+  : AlpacaDevice(server, deviceNumber), _controller(switchController) {
   // Initialize other members as needed...
   _alpacaDeviceType = "Switch";
   _uniqueId = String("4431281c85604ad7982f5a6e507dda20-") + _alpacaDeviceType + "-" + String(_deviceNumber);
@@ -31,10 +31,10 @@ void AlpacaSwitchDevice::begin() {
   _server.bind(_prefixApiUri + "/setswitch", HTTP_PUT, std::bind(&AlpacaSwitchDevice::handleSwitchPut, this));
 }
 void AlpacaSwitchDevice::_doConnect(bool connected) {
-  _controller->do_connect(connected);
+  _controller->connect(connected);
 }
 bool AlpacaSwitchDevice::_isConnected() {
-  return _controller->is_connected();
+  return _controller->isConnected();
 }
 void AlpacaSwitchDevice::handleSetupdevice() {
   _server.logRequest(__func__);
@@ -80,9 +80,9 @@ void AlpacaSwitchDevice::handleSetupdevice() {
     _server.sendContent("<input type='submit' value='Update'>");
     _server.sendContent("</form>");
 
-    _server.sendContent("<button type='button' onclick='setRelayState("
+    _server.sendContent("<button type='button' onclick='setState("
         + String(i) + ", \"true\")'>On</button> ");
-    _server.sendContent("<button type='button' onclick='setRelayState("
+    _server.sendContent("<button type='button' onclick='setState("
         + String(i) + ", \"false\")'>Off</button> ");
 
     _server.sendContent("</li>");    
@@ -103,7 +103,7 @@ void AlpacaSwitchDevice::handleSetupdevice() {
                    "}"
                    "</script>");
   _server.sendContent("<script>"
-        "function setRelayState(relayNum, state) {"
+        "function setState(relayNum, state) {"
         "var xhr = new XMLHttpRequest();"
         "xhr.open('PUT', '" + urlSetSwith + "', true);"
         "xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');"
@@ -147,7 +147,7 @@ void AlpacaSwitchDevice::handleSwitchGet() {
 
   Serial.print("    | Id: ");
   Serial.println(id);
-  _server.returnBoolValue(_controller->getRelayState(id), "", 0);
+  _server.returnBoolValue(_controller->getState(id), "", 0);
   Serial.println();
 }
 
@@ -167,7 +167,7 @@ void AlpacaSwitchDevice::handleSwitchvalueGet() {
 
   Serial.print("    | Id: ");
   Serial.println(id);
-  _server.returnIntValue(_controller->getRelayState(id)?1:0, "", 0);
+  _server.returnIntValue(_controller->getState(id)?1:0, "", 0);
   Serial.println();
 }
 void AlpacaSwitchDevice::handleMaxswitchvalueGet() {
@@ -204,7 +204,7 @@ void AlpacaSwitchDevice::handleSwitchvaluePut() {
     int value = (uint32_t)_server.arg("Value").toInt();
     Serial.print("    | Id: ");
     Serial.println(id);
-    _controller->setRelayState(id, value==1);
+    _controller->setState(id, value==1);
     _server.returnNothing("", 0);
   }
 }
@@ -220,9 +220,9 @@ void AlpacaSwitchDevice::handleSwitchPut() {
     Serial.print("  State: ");
     Serial.println(state);
     if(state=="true") {
-      _controller->setRelayState(id, 1);
+      _controller->setState(id, 1);
     } else {
-      _controller->setRelayState(id, 0);
+      _controller->setState(id, 0);
     }
     _server.returnNothing("", 0);
   }

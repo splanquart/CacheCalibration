@@ -2,6 +2,7 @@
 #include "AlpacaDriver.h"
 #include "HttpHandler.h"
 #include "AlpacaSwitchDevice.h"
+#include "RelayAdapter.h"
 
 #include <WiFiManager.h>
 #include <DNSServer.h>
@@ -11,6 +12,7 @@
 
 const int maxSwitch = 4;
 RelayController *relay;
+RelayAdapter* relayAdapter;
 AlpacaDriver *driver;
 ESP8266WebServer server(80);
 
@@ -48,8 +50,9 @@ void setup() {
   server.begin();
   
   relay = new RelayController(maxSwitch);
-  driver = new AlpacaDriver(httpHandler, relay, 0);
-  alpacaSwitch = new AlpacaSwitchDevice(httpHandler, 0, relay); // DeviceId est 0
+  relayAdapter = new RelayAdapter(relay, {0,1,2,3});
+  driver = new AlpacaDriver(httpHandler);
+  alpacaSwitch = new AlpacaSwitchDevice(httpHandler, 0, relayAdapter); // DeviceId est 0
   driver->addDevice(alpacaSwitch);
 
 
