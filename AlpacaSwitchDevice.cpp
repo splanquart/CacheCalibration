@@ -1,19 +1,14 @@
 #include "AlpacaSwitchDevice.h"
 
 AlpacaSwitchDevice::AlpacaSwitchDevice(HttpHandler& server, int deviceNumber, ISwitch* switchController)
-  : AlpacaDevice(server, deviceNumber), _controller(switchController) {
-  // Initialize other members as needed...
-  _alpacaDeviceType = "Switch";
-  _uniqueId = String("4431281c85604ad7982f5a6e507dda20-") + _alpacaDeviceType + "-" + String(_deviceNumber);
-  //_uniqueId = (String("4431281c85604ad7982f5a6e507dda20-") + _alpacaDeviceType + "-" + String(_deviceNumber)).c_str();
-
+  : AlpacaDevice(server, deviceNumber, "Switch", {}), _controller(switchController) {
   _prefixSetupUri = "/setup/v1/switch/" + String(_deviceNumber);
   _prefixApiUri = "/api/v1/switch/" + String(_deviceNumber);
 }
 
 void AlpacaSwitchDevice::begin() {
   AlpacaDevice::begin();
-  _server.bind("/setup/v1/switch/" + String(_deviceNumber) + "/setup", HTTP_GET, std::bind(&AlpacaSwitchDevice::handleSetupdevice, this));
+  _server.bind(_prefixSetupUri + "/setup", HTTP_GET, std::bind(&AlpacaSwitchDevice::handleSetupdevice, this));
   
   _server.bind(_prefixApiUri + "/maxswitch", HTTP_GET, std::bind(&AlpacaSwitchDevice::handleMaxswitchGet, this));
   _server.bind(_prefixApiUri + "/supportedactions", HTTP_GET, std::bind(&AlpacaSwitchDevice::handleSupportedactionsGet, this));
@@ -55,8 +50,12 @@ void AlpacaSwitchDevice::handleSetupdevice() {
     }
     @media (prefers-color-scheme: dark) {
       body {
-        color: white;
-        background-color: black;
+          color: #adaaaa;
+          background-color: #151515;
+      }
+      ul {
+          border-color: #3c3b3b;
+          background: #181818;
       }
     }
     li {
@@ -65,12 +64,33 @@ void AlpacaSwitchDevice::handleSetupdevice() {
     ul form {
         margin-bottom: 0em;
     }
+    ul {
+        border: 1px solid;
+        border-color: #3c3b3b;
+        padding-bottom: 0.5em;
+        font-size: 0.85em;
+        background: #181818;
+    }
   </style>
   )");
   _server.sendContent("<body>");
-  _server.sendContent("<h1>Configuration of Switch ");
+  _server.sendContent("<h1>Configuration of ");
+  _server.sendContent(_alpacaDeviceType);
+  _server.sendContent(" ");
   _server.sendContent(String(_deviceNumber));
   _server.sendContent("</h1>");
+
+  _server.sendContent("<ul>");
+  _server.sendContent("<li>Name:&nbsp;");
+  _server.sendContent(_deviceName);
+  _server.sendContent("</li>");
+  _server.sendContent("<li>Type:&nbsp;");
+  _server.sendContent(_alpacaDeviceType);
+  _server.sendContent("</li>");
+  _server.sendContent("<li>Number:&nbsp;");
+  _server.sendContent(String(_deviceNumber));
+  _server.sendContent("</li>");
+  _server.sendContent("</ul>");
   _server.sendContent("<ul>");
   for(int i=0;i<_controller->getMaxSwitch();i++) {
     _server.sendContent("<li>");
@@ -129,93 +149,68 @@ void AlpacaSwitchDevice::handleSupportedactionsGet() {
 void AlpacaSwitchDevice::handleCanwritesGet() {
   _server.logRequest(__func__);
   _server.returnBoolValue(true, "", 0); 
-
 }
 void AlpacaSwitchDevice::handleSwitchnameGet() {
   _server.logRequest(__func__);
   int id = _server.getArgCaseInsensitive("id").toInt();
 
-  Serial.print("    | Id: ");
-  Serial.println(id);
+  _server.logArg("Id", id); 
   _server.returnStringValue(_controller->getName(id), "", 0);
-  Serial.println();
 }
 
 void AlpacaSwitchDevice::handleSwitchGet() {
   _server.logRequest(__func__);
   int id = _server.getArgCaseInsensitive("id").toInt();
-
-  Serial.print("    | Id: ");
-  Serial.println(id);
+  _server.logArg("Id", id); 
   _server.returnBoolValue(_controller->getState(id), "", 0);
-  Serial.println();
 }
 
 void AlpacaSwitchDevice::handleSwitchdescriptionGet() { 
-
   _server.logRequest(__func__);
   int id = _server.getArgCaseInsensitive("id").toInt();
-
-  Serial.print("    | Id: ");
-  Serial.println(id);
+  _server.logArg("Id", id); 
   _server.returnStringValue(_controller->getName(id) + " description", "", 0);
-  Serial.println();
 }
 void AlpacaSwitchDevice::handleSwitchvalueGet() {
   _server.logRequest(__func__);
   int id = _server.getArgCaseInsensitive("id").toInt();
-
-  Serial.print("    | Id: ");
-  Serial.println(id);
+  _server.logArg("Id", id); 
   _server.returnIntValue(_controller->getState(id)?1:0, "", 0);
-  Serial.println();
 }
 void AlpacaSwitchDevice::handleMaxswitchvalueGet() {
   _server.logRequest(__func__);
   int id = _server.getArgCaseInsensitive("id").toInt();
-
-  Serial.print("    | Id: ");
-  Serial.println(id);
+  _server.logArg("Id", id); 
   _server.returnIntValue(1, "", 0);
-  Serial.println();
 }
 void AlpacaSwitchDevice::handleMinswitchvalueGet() {
   _server.logRequest(__func__);
   int id = _server.getArgCaseInsensitive("id").toInt();
-
-  Serial.print("    | Id: ");
-  Serial.println(id);
+  _server.logArg("Id", id); 
   _server.returnIntValue(0, "", 0);
-  Serial.println();
 }
 void AlpacaSwitchDevice::handleSwitchstepGet() {  
   _server.logRequest(__func__);
   int id = _server.getArgCaseInsensitive("id").toInt();
-
-  Serial.print("    | Id: ");
-  Serial.println(id);
+  _server.logArg("Id", id); 
   _server.returnIntValue(1, "", 0);
-  Serial.println();
 }
 void AlpacaSwitchDevice::handleSwitchvaluePut() {
   _server.logRequest(__func__);
   if (_server.method() == HTTP_PUT) {
     int id = _server.getArgCaseInsensitive("id").toInt();
     int value = (uint32_t)_server.arg("Value").toInt();
-    Serial.print("    | Id: ");
-    Serial.println(id);
+    _server.logArg("Id", id); 
     _controller->setState(id, value==1);
     _server.returnNothing("", 0);
   }
 }
 void AlpacaSwitchDevice::handleSwitchPut() {
   _server.logRequest(__func__);
-
   if (_server.method() == HTTP_PUT) {
     int id = _server.getArgCaseInsensitive("id").toInt();
     String state = _server.getArgCaseInsensitive("State");
     state.toLowerCase();
-    Serial.print("    | Id: ");
     Serial.print(id);
     Serial.print("  State: ");
     Serial.println(state);
@@ -229,14 +224,11 @@ void AlpacaSwitchDevice::handleSwitchPut() {
 }
 void AlpacaSwitchDevice::handleSwitchnamePut() {
   _server.logRequest(__func__);
-
   if (_server.method() == HTTP_PUT) {
     int id = _server.getArgCaseInsensitive("id").toInt();
     String value = _server.arg("Value");
-    Serial.print("    | Id: ");
-    Serial.println(id);
-    Serial.print("    | Value: ");
-    Serial.println(value);
+    _server.logArg("Id", id); 
+    _server.logArg("Value", value);
     _controller->setName(id, value);
     _server.returnNothing("", 0);
   }

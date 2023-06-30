@@ -18,6 +18,7 @@ ESP8266WebServer server(80);
 
 HttpHandler httpHandler(ALPACA_PORT);
 AlpacaSwitchDevice *alpacaSwitch;
+AlpacaCoverCalibratorDevice *alpacaCover;
 
 
 void handleReset() {
@@ -50,14 +51,17 @@ void setup() {
   server.begin();
   
   relay = new RelayController(maxSwitch);
-  relayAdapter = new RelayAdapter(relay, {0,1,2,3});
   driver = new AlpacaDriver(httpHandler);
-  alpacaSwitch = new AlpacaSwitchDevice(httpHandler, 0, relayAdapter); // DeviceId est 0
+  alpacaSwitch = new AlpacaSwitchDevice(httpHandler, 0, new RelayAdapter(relay, {0,1,2,3}));
+  alpacaCover = new AlpacaCoverCalibratorDevice(httpHandler, 0, new RelayAdapter(relay, {3}), new RelayAdapter(relay, {2}));
   driver->addDevice(alpacaSwitch);
+  driver->addDevice(alpacaCover);
 
 
   driver->begin();
   alpacaSwitch->begin();
+  alpacaCover->begin();
+
 }
 
 void loop() {

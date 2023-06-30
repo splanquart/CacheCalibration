@@ -1,4 +1,4 @@
-#include "AlpacaDriver.h"
+  #include "AlpacaDriver.h"
 
 
 AlpacaDriver::AlpacaDriver(HttpHandler &server)
@@ -14,9 +14,6 @@ void AlpacaDriver::begin() {
   Serial.print(WiFi.localIP());
   Serial.println("/");
 
-  
-//  _server.bind("/api/v1.0/devices", HTTP_GET, std::bind(&AlpacaDriver::handleGetDevices, this));
-  
   _server.bind("/management/apiversions", HTTP_GET, std::bind(&AlpacaDriver::handleAPIVersions, this));
   _server.bind("/management/v1/description", HTTP_GET, std::bind(&AlpacaDriver::handleDescription, this));
   _server.bind("/management/v1/configureddevices", HTTP_GET, std::bind(&AlpacaDriver::handleConfiguredDevices, this));
@@ -117,7 +114,18 @@ void AlpacaDriver::handleConfiguredDevices() {
 
 void AlpacaDriver::handleSetup() {
   _server.logRequest(__func__);
-  String response = "<html><body>Setup main page<br/><a href=\"/setup/v1/switch/0/setup\">Configuration Switch 0</a></body></html>";
-  _server.sendHtml(200, response); // envoie la réponse JSON au client Alpaca
+  // Préparation du début de la réponse HTML
+    String response = "<html><body>Setup main page<br/>";
 
+    // Parcourir tous les appareils enregistrés
+    for (int i = 0; i < _devices.size(); ++i) {
+        // Générer un lien pour chaque appareil
+        response += "<a href=\"" + _devices[i]->getDeviceSetupUrl() + "\">Configuration " + _devices[i]->getDeviceName() + "</a><br/>";
+    }
+
+    // Fin de la réponse HTML
+    response += "</body></html>";
+
+    // Envoie la réponse HTML au client Alpaca
+    _server.sendHtml(200, response);
 }

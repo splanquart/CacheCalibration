@@ -33,6 +33,11 @@ public:
   String arg(int i);
   String arg(String i);
 
+  
+  void logResponse(String &response);
+  void logArg(String arg_name, String arg_value);
+  void logArg(String arg_name, int arg_value);
+
 protected:
   void handlerNotFound();
     

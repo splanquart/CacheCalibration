@@ -40,14 +40,16 @@ String HttpHandler::getHTTPMethodName() {
   }
 }
 void HttpHandler::logRequest(const String& callerName) {
-  Serial.print(getHTTPMethodName());
-  Serial.print(" ");
-  Serial.print(_server.uri());
-  if(callerName!=""){
-    Serial.print(" -> ");
-    Serial.print(callerName);
+  if(0) {
+    Serial.print(getHTTPMethodName());
+    Serial.print(" ");
+    Serial.print(_server.uri());
+    if(callerName!=""){
+      Serial.print(" -> ");
+      Serial.print(callerName);
+    }
+    Serial.println();
   }
-  Serial.println();
 }
 void HttpHandler::sendHtml(int httpAnwserCode, String content) {
   _server.send(httpAnwserCode, _content_type_html, content);
@@ -92,8 +94,7 @@ void HttpHandler::returnResponse(DynamicJsonDocument val) {
   String response;
   serializeJson(doc, response);
   _server.send(200, _content_type, response); // envoie la réponse JSON au client Alpaca
-  Serial.print("    >>>> ");
-  Serial.println(response);
+  logResponse(response);
 }
 void HttpHandler::returnBoolValue(bool val, String errMsg, int errNr) {
   int clientID = (uint32_t)_server.arg("ClientID").toInt();
@@ -118,8 +119,7 @@ void HttpHandler::returnBoolValue(bool val, String errMsg, int errNr) {
   serializeJson(doc, response);
   
   _server.send(200, _content_type, response);
-  Serial.print("    >>>> ");
-  Serial.println(response);
+  logResponse(response);
 }
 void HttpHandler::returnNothing(String errMsg, int errNr) {
   int clientID = (uint32_t)_server.arg("ClientID").toInt();
@@ -143,8 +143,7 @@ void HttpHandler::returnNothing(String errMsg, int errNr) {
   serializeJson(doc, response);
   
   _server.send(200, _content_type, response);
-  Serial.print("    >>>> ");
-  Serial.println(response);
+  logResponse(response);
 }
 void HttpHandler::returnStringValue(String val, String errMsg, int errNr) {
   int clientID = (uint32_t)_server.arg("ClientID").toInt();
@@ -169,8 +168,7 @@ void HttpHandler::returnStringValue(String val, String errMsg, int errNr) {
   serializeJson(doc, response);
   
   _server.send(200, _content_type, response);
-  Serial.print("    >>>> ");
-  Serial.println(response);
+  logResponse(response);
 }
 void HttpHandler::returnIntValue(int val, String errMsg, int errNr) {
   int clientID = (uint32_t)_server.arg("ClientID").toInt();
@@ -194,12 +192,26 @@ void HttpHandler::returnIntValue(int val, String errMsg, int errNr) {
   
   String response;
   serializeJson(doc, response);
-  
+  logResponse(response);
   _server.send(200, _content_type, response);
-  Serial.print("    >>>> ");
-  Serial.println(response);
 }
-
+void HttpHandler::logResponse(String &response) {
+  if(0) { 
+    Serial.print("    >>>> ");
+    Serial.println(response);
+  }
+}
+void HttpHandler::logArg(String arg_name, int arg_value) {
+  return logArg(arg_name, String(arg_value));
+}
+void HttpHandler::logArg(String arg_name, String arg_value) {
+  if(0) {
+    Serial.print("    | ");
+    Serial.print(arg_name);
+    Serial.print(": ");
+    Serial.println(arg_value);
+  }
+}
 String HttpHandler::getArgCaseInsensitive(const String& argName) {
     for (uint8_t i = 0; i < _server.args(); i++) {
         if (_server.argName(i).equalsIgnoreCase(argName)) {

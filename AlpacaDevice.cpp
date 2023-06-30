@@ -1,7 +1,9 @@
 #include "AlpacaDevice.h"
 
-AlpacaDevice::AlpacaDevice(HttpHandler& server, int deviceNumber) 
-  : _server(server), _deviceNumber(deviceNumber) { 
+AlpacaDevice::AlpacaDevice(HttpHandler& server, int deviceNumber, String deviceType, std::vector<String> supportedActions) 
+  : _server(server), _deviceNumber(deviceNumber), _alpacaDeviceType(deviceType), _supportedActions(supportedActions) { 
+    _uniqueId = _generateUniqueId(_alpacaDeviceType, _deviceNumber);
+    _deviceName = _deviceName + "_" + _uniqueId;
 }
 
 void AlpacaDevice::begin() {
@@ -11,6 +13,57 @@ void AlpacaDevice::begin() {
   _server.bind(_prefixApiUri + "/driverinfo", HTTP_GET, std::bind(&AlpacaDevice::handleDriverinfoGet, this));
   _server.bind(_prefixApiUri + "/driverversion", HTTP_GET, std::bind(&AlpacaDevice::handleDriverversionGet, this));
   _server.bind(_prefixApiUri + "/interfaceversion", HTTP_GET, std::bind(&AlpacaDevice::handleInterfaceVersionGet, this));
+  _server.bind(_prefixApiUri + "/supportedactions", HTTP_GET, std::bind(&AlpacaDevice::handleSupportedActionsGet, this));
+
+}
+void AlpacaDevice::handleSupportedActionsGet() {
+  _server.logRequest(__func__);
+  DynamicJsonDocument doc(1024);
+  JsonArray actions = doc.to<JsonArray>();
+  for(const auto& action : _supportedActions) {
+    actions.add(action);
+  }
+  Serial.println(_getSupportedActionsLog());
+  _server.returnResponse(doc);
+}
+String AlpacaDevice::_getSupportedActionsLog() {
+  String logOutput = "List of supported actions: ";
+  for(const auto& action : _supportedActions) {
+    logOutput += action;
+    logOutput += ", ";
+  }
+  return logOutput.substring(0, logOutput.length()-2);
+}
+String AlpacaDevice::_base36_encode(unsigned long long number) {
+  const char ALPHABET[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const int BASE = sizeof(ALPHABET) - 1;
+  String result = "";
+  
+  while (number > 0) {
+    result = String(ALPHABET[number % BASE]) + result;
+    number /= BASE;
+  }
+  
+  return result;
+}
+String AlpacaDevice::_generateUniqueId(String hardwareName, int deviceId) {
+  /**
+   * produce a name like CoverCalibrator-S6VQ8TW9A-0
+   */
+  String mac = WiFi.macAddress();
+  mac.replace(":", ""); // Supprimer les deux-points dans l'adresse MAC
+  unsigned long long macValue = strtoull(mac.c_str(), NULL, 16);
+  String uniqueId = hardwareName + "-" + _base36_encode(macValue) + "-" + String(deviceId);
+  return uniqueId;
+}
+String AlpacaDevice::getDeviceType() {
+  return _alpacaDeviceType;
+}
+String AlpacaDevice::getDeviceName() {
+  return _alpacaDeviceType + " " + String(_deviceNumber);
+}
+String AlpacaDevice::getDeviceSetupUrl() {
+  return _prefixSetupUri + "/setup";
 }
 DynamicJsonDocument AlpacaDevice::getDeviceInfo() {
     DynamicJsonDocument val(1024);

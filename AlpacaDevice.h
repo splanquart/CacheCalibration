@@ -6,7 +6,7 @@
 
 class AlpacaDevice {
 public:
-  AlpacaDevice(HttpHandler& server, int deviceNumber);
+  AlpacaDevice(HttpHandler& server, int deviceNumber, String deviceType, std::vector<String> supportedActions);
 
   virtual void begin();
   DynamicJsonDocument getDeviceInfo();
@@ -20,6 +20,12 @@ public:
   void handleDriverinfoGet();
   void handleDriverversionGet();
   void handleInterfaceVersionGet();
+  void handleSupportedActionsGet();
+
+  String getDeviceType();
+  String getDeviceSetupUrl();
+  String getDeviceName();
+
 protected:
   HttpHandler& _server;
   int _deviceNumber;
@@ -36,7 +42,12 @@ protected:
 
 
   //must be randomly generated and distinct for each devices
-  String _uniqueId = "4431281c85604ad7982f5a6e507dda20-";
+  String _uniqueId = "undefined-for-now";
+  std::vector<String> _supportedActions;
+
+  String _generateUniqueId(String hardwareName, int deviceId);
+  String _base36_encode(unsigned long long number);
+  String _getSupportedActionsLog();
 
 };
 
