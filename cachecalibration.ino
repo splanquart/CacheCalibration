@@ -3,6 +3,7 @@
 #include "HttpHandler.h"
 #include "AlpacaSwitchDevice.h"
 #include "RelayAdapter.h"
+#include "AlpacaCoverCalibratorDevice.h"
 
 #include <WiFiManager.h>
 #include <DNSServer.h>
