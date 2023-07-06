@@ -44,6 +44,7 @@ public:
    * https://ascom-standards.org/api/?urls.primaryName=ASCOM%20Alpaca%20Management%20API#/HTML%20Browser%20User%20Interface
    */
   void handleSetup();
+  String getSetupUrl();
   
 private:
   RelayController* _controller;
@@ -54,6 +55,7 @@ private:
   HttpHandler& _server;
   char _packetBuffer[255]; //buffer to hold incoming packet
   uint32_t _serverTransactionID = 0;
+  String _rootUrl;
   
   
   // Alpaca properties

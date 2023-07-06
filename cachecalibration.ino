@@ -48,7 +48,6 @@ void setup() {
   // Si vous arrivez ici, vous êtes connecté au WiFi choisi
   Serial.println("Connecté !");
 
-  server.on("/reset", handleReset); // Register reset handler
   server.begin();
   
   relay = new RelayController(maxSwitch);
@@ -58,6 +57,12 @@ void setup() {
   driver->addDevice(alpacaSwitch);
   driver->addDevice(alpacaCover);
 
+
+  server.on("/reset", handleReset);
+  server.on("/", HTTP_GET, []() {
+    server.sendHeader("Location", driver->getSetupUrl(), true);
+    server.send(302, "text/plain");
+  });
 
   driver->begin();
   alpacaSwitch->begin();

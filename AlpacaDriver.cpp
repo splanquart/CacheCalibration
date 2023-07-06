@@ -9,10 +9,10 @@ void AlpacaDriver::begin() {
  
   // Print the IP address
   Serial.println("");
+  _rootUrl = String("http://") + WiFi.localIP().toString() + ":" + _server.getPort() + "/";
+
   Serial.print("Use this URL to connect: ");
-  Serial.print("http://");
-  Serial.print(WiFi.localIP());
-  Serial.println("/");
+  Serial.println(_rootUrl);
 
   _server.bind("/management/apiversions", HTTP_GET, std::bind(&AlpacaDriver::handleAPIVersions, this));
   _server.bind("/management/v1/description", HTTP_GET, std::bind(&AlpacaDriver::handleDescription, this));
@@ -22,6 +22,9 @@ void AlpacaDriver::begin() {
   
   _server.begin();
   Serial.println("Server started");
+}
+String AlpacaDriver::getSetupUrl() {
+   return _rootUrl + "setup";
 }
 void AlpacaDriver::addDevice(AlpacaDevice* device) {
     _devices.push_back(device);

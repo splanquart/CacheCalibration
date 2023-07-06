@@ -12,6 +12,7 @@
 class HttpHandler {
 public:
   HttpHandler(uint16_t port);
+  uint16_t getPort();
 
   void begin();
   void handleClient();
@@ -40,6 +41,7 @@ public:
 
 protected:
   void handlerNotFound();
+  int _serverPort;
     
 private:
   ESP8266WebServer _server;

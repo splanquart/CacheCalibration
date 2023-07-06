@@ -2,7 +2,10 @@
 #define ALPACA_PORT 11111
 
 HttpHandler::HttpHandler(uint16_t port)
-: _server(ALPACA_PORT) {
+: _server(ALPACA_PORT), _serverPort(ALPACA_PORT) {
+}
+uint16_t HttpHandler::getPort() {
+  return _serverPort;
 }
 
 void HttpHandler::begin() {
