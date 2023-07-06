@@ -36,7 +36,7 @@ void AlpacaSwitchDevice::handleSetupdevice() {
   String urlSetSwithName = _prefixApiUri + "/setswitchname";
   String urlSetSwith = _prefixApiUri + "/setswitch";
   _server.sendContent("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
-  _server.sendContent("<meta charset=\"UTF-8\"><html>");
+  _server.sendContent("<html><meta charset=\"UTF-8\">");
   _server.sendContent("<meta name=\"color-scheme\" content=\"dark light\">");
   _server.sendContent(R"(
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -69,7 +69,10 @@ void AlpacaSwitchDevice::handleSetupdevice() {
         border-color: #3c3b3b;
         padding-bottom: 0.5em;
         font-size: 0.85em;
-        background: #181818;
+    }
+    ul.infoblock {
+        list-style-type: none;
+        padding-inline-start: 1em;
     }
   </style>
   )");
@@ -80,7 +83,7 @@ void AlpacaSwitchDevice::handleSetupdevice() {
   _server.sendContent(String(_deviceNumber));
   _server.sendContent("</h1>");
 
-  _server.sendContent("<ul>");
+  _server.sendContent("<ul class=\"infoblock\">");
   _server.sendContent("<li>Name:&nbsp;");
   _server.sendContent(_deviceName);
   _server.sendContent("</li>");
