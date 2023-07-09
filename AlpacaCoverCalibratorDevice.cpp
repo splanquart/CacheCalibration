@@ -30,47 +30,14 @@ void AlpacaCoverCalibratorDevice::begin() {
     _server.bind(_prefixApiUri + "/calibratoroff", HTTP_PUT, std::bind(&AlpacaCoverCalibratorDevice::handleCalibratorOffPut, this));
     _server.bind(_prefixApiUri + "/calibratoron", HTTP_PUT, std::bind(&AlpacaCoverCalibratorDevice::handleCalibratorOnPut, this));    
   }
-}
 
-void AlpacaCoverCalibratorDevice::_doConnect(bool connected) {
-  _cover->connect(connected);
-}
-
-bool AlpacaCoverCalibratorDevice::_isConnected() {
-  // retourner ici l'état de connexion du périphérique CoverCalibrator
-  return _cover->isConnected();
-}
-
-void AlpacaCoverCalibratorDevice::handleSetupdevice() {
-  _server.logRequest(__func__);
-  String urlSetSwithName = _prefixApiUri + "/setswitchname";
-  String urlSetSwith = _prefixApiUri + "/setswitch";
-  _server.sendContent("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
-  _server.sendContent("<meta charset=\"UTF-8\"><html>");
-  _server.sendContent("<meta name=\"color-scheme\" content=\"dark light\">");
-  _server.sendContent(R"(
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  )");
-  _server.sendContent(R"(
-  <style>
-    body {
-      color: black;
-      background-color: white;
-      transition: color 0.3s ease-out, background-color 0.3s ease-out;
-    }
-    @media (prefers-color-scheme: dark) {
-      body {
-        color: white;
-        background-color: black;
-      }
-    }
+  _setup.addStyle(R"(
     li {
         margin-top: 1em;
     }
     ul form {
         margin-bottom: 0em;
-    }
-    
+    }    
     span#coverState {
         padding: 0 1em;
     }
@@ -83,37 +50,10 @@ void AlpacaCoverCalibratorDevice::handleSetupdevice() {
     .hidden > * {
       display: none;
     }
-  </style>
-  )");
-  _server.sendContent("<body>");
-  _server.sendContent("<h1>Configuration of ");
-  _server.sendContent(_alpacaDeviceType);
-  _server.sendContent(" ");
-  _server.sendContent(String(_deviceNumber));
-  _server.sendContent("</h1>");
-
-  _server.sendContent("<ul>");
-  _server.sendContent("<li>Name:&nbsp;");
-  _server.sendContent(_deviceName);
-  _server.sendContent("</li>");
-  _server.sendContent("<li>Type:&nbsp;");
-  _server.sendContent(_alpacaDeviceType);
-  _server.sendContent("</li>");
-  _server.sendContent("<li>Number:&nbsp;");
-  _server.sendContent(String(_deviceNumber));
-  _server.sendContent("</li>");
-  _server.sendContent("</ul>");
-
-  _server.sendContent(R"(
-    <span id="coverState">Unknown</span><br/>
-    <div id="coverControls">
-    <button id="openCover">Open Cover</button>
-    <button id="closeCover">Close Cover</button>
-    </div>
   )");
 
-  _server.sendContent(R"(
-    <script>
+
+   _setup.addScript(R"(
         var coverStateMapping = {
             0: "Cover not present",
             1: "Cover is closed",
@@ -163,21 +103,9 @@ void AlpacaCoverCalibratorDevice::handleSetupdevice() {
             xhttp.open("PUT", "/api/v1/covercalibrator/0/closecover", true);
             xhttp.send();
         }
-        
-    </script>
     )");
 
-  _server.sendContent(R"---(
-    <div id="calibratorState">
-    <p><span id="state">Unknown</span></p>
-    <div id="calibratorControls">
-    <button onclick="calibratorOff()">Turn Off</button>
-    <button onclick="calibratorOn()">Turn On</button>
-    </div>
-    </div>
-  )---");
-  _server.sendContent(R"---(
-      <script type="text/javascript">
+  _setup.addScript(R"---(
         function updateCalibratorState() {
           var calibratorStateMapping = {
             0: "The device does not have a calibration capability",
@@ -226,10 +154,40 @@ void AlpacaCoverCalibratorDevice::handleSetupdevice() {
         // Update calibrator state every 2 seconds
         setInterval(updateCalibratorState, 2000);
         updateCalibratorState();  // Also update on page load
-      </script>
     )---");
+  
+}
 
-  _server.sendContent("</body></html>");
+void AlpacaCoverCalibratorDevice::_doConnect(bool connected) {
+  _cover->connect(connected);
+}
+
+bool AlpacaCoverCalibratorDevice::_isConnected() {
+  // retourner ici l'état de connexion du périphérique CoverCalibrator
+  return _cover->isConnected();
+}
+
+void AlpacaCoverCalibratorDevice::handleSetupdevice() {
+  _server.logRequest(__func__);
+  _setup.render([this](HttpHandler& server) {
+      _server.sendContent(R"---(
+        <div id="coverBlock">
+          <span id="coverState">Unknown</span><br/>
+          <div id="coverControls">
+            <button id="openCover">Open Cover</button>
+            <button id="closeCover">Close Cover</button>
+          </div>
+        </div>
+
+        <div id="calibratorState">
+          <p><span id="state">Unknown</span></p>
+          <div id="calibratorControls">
+            <button onclick="calibratorOff()">Turn Off</button>
+            <button onclick="calibratorOn()">Turn On</button>
+          </div>
+        </div>
+      )---");
+  });
 }
 
 void AlpacaCoverCalibratorDevice::handleCloseCoverPut() {

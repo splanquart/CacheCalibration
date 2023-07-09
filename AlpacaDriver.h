@@ -11,6 +11,8 @@
 #include "RelayController.h"
 #include "AlpacaDevice.h"
 #include "HttpHandler.h"
+#include "PageTemplate.h"
+
 
 #define DISCOVERY_PORT 32227 // port ASCom discovery
 #define ALPACA_PORT 11111 // port ASCom HTTP port
@@ -46,7 +48,7 @@ public:
   void handleSetup();
   String getSetupUrl();
   
-private:
+protected:
   RelayController* _controller;
   std::vector<AlpacaDevice*> _devices;
   int _deviceId;
@@ -56,8 +58,8 @@ private:
   char _packetBuffer[255]; //buffer to hold incoming packet
   uint32_t _serverTransactionID = 0;
   String _rootUrl;
-  
-  
+
+  PageTemplate _setup;
   // Alpaca properties
   const char* _manufacturer = "My Company";
   //const char* _alpacaUniqueId = "mycompany.cachecalibrationcontroller";

@@ -1,8 +1,8 @@
-  #include "AlpacaDriver.h"
+#include "AlpacaDriver.h"
 
 
 AlpacaDriver::AlpacaDriver(HttpHandler &server)
-    : _server(server) {}
+    : _server(server), _setup(server) {}
 
 void AlpacaDriver::begin() {
   _udp.begin(DISCOVERY_PORT);
@@ -117,25 +117,10 @@ void AlpacaDriver::handleConfiguredDevices() {
 
 void AlpacaDriver::handleSetup() {
   _server.logRequest(__func__);
-  // Préparation du début de la réponse HTML
-    _server.sendContent("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
-    _server.sendContent("<html><meta charset=\"UTF-8\">");
-    _server.sendContent("<meta name=\"color-scheme\" content=\"dark light\">");
-    _server.sendContent(R"(
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    )");
-
-    String response = "<body>Setup main page<br/>";
-
-    // Parcourir tous les appareils enregistrés
-    for (int i = 0; i < _devices.size(); ++i) {
-        // Générer un lien pour chaque appareil
-        response += "<a href=\"" + _devices[i]->getDeviceSetupUrl() + "\">Configuration " + _devices[i]->getDeviceName() + "</a><br/>";
-    }
-
-    // Fin de la réponse HTML
-    response += "</body></html>";
-
-    // Envoie la réponse HTML au client Alpaca
-    _server.sendContent(response);
+    _setup.render([this](HttpHandler& server) {
+      server.sendContent("<h1>Setup main page</h1>");
+      for (int i = 0; i < _devices.size(); ++i) {
+        server.sendContent("<a href=\"" + _devices[i]->getDeviceSetupUrl() + "\">Configuration " + _devices[i]->getDeviceName() + "</a><br/>");
+      }
+    });
 }

@@ -1,9 +1,14 @@
 #include "AlpacaDevice.h"
 
 AlpacaDevice::AlpacaDevice(HttpHandler& server, int deviceNumber, String deviceType, std::vector<String> supportedActions) 
-  : _server(server), _deviceNumber(deviceNumber), _alpacaDeviceType(deviceType), _supportedActions(supportedActions) { 
+  : _server(server), _deviceNumber(deviceNumber), _alpacaDeviceType(deviceType), _supportedActions(supportedActions), _setup(server) { 
     _uniqueId = _generateUniqueId(_alpacaDeviceType, _deviceNumber);
     _deviceName = _deviceName + "_" + _uniqueId;
+    _setup.addStyle(R"(
+    .home-link {
+      text-decoration: none;
+    }
+    )");
 }
 
 void AlpacaDevice::begin() {
@@ -15,6 +20,25 @@ void AlpacaDevice::begin() {
   _server.bind(_prefixApiUri + "/interfaceversion", HTTP_GET, std::bind(&AlpacaDevice::handleInterfaceVersionGet, this));
   _server.bind(_prefixApiUri + "/supportedactions", HTTP_GET, std::bind(&AlpacaDevice::handleSupportedActionsGet, this));
 
+  _setup.setTitle(
+    "<a class=\"home-link\" href=\"/setup\">&#x1F3E0;&nbsp;</a>"
+    + _alpacaDeviceType + " " + String(_deviceNumber)
+    );
+
+  _setup.addPrecontent([this](HttpHandler& server) {
+    _server.sendContent("<ul class=\"infoblock\">");
+    _server.sendContent("<li>Name:&nbsp;");
+    _server.sendContent(_deviceName);
+    _server.sendContent("</li>");
+    _server.sendContent("<li>Type:&nbsp;");
+    _server.sendContent(_alpacaDeviceType);
+    _server.sendContent("</li>");
+    _server.sendContent("<li>Number:&nbsp;");
+    _server.sendContent(String(_deviceNumber));
+    _server.sendContent("</li>");
+    _server.sendContent("</ul>");
+    _server.sendContent("</ul>");
+  });
 }
 void AlpacaDevice::handleSupportedActionsGet() {
   _server.logRequest(__func__);

@@ -3,6 +3,7 @@
 
 #include <ArduinoJson.h>
 #include "HttpHandler.h"
+#include "PageTemplate.h"
 
 class AlpacaDevice {
 public:
@@ -28,6 +29,7 @@ public:
 
 protected:
   HttpHandler& _server;
+  PageTemplate _setup;
   int _deviceNumber;
   virtual void _doConnect(bool connected) = 0;
   virtual bool _isConnected() = 0;
