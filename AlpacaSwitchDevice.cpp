@@ -26,29 +26,130 @@ void AlpacaSwitchDevice::begin() {
   _server.bind(_prefixApiUri + "/setswitch", HTTP_PUT, std::bind(&AlpacaSwitchDevice::handleSwitchPut, this));
 
    _setup.addStyle(R"(
-          ul.relaylist li{
+        ul.relaylist {
             list-style-type: none;
+            padding-left: 0;
+            border: none;
+        }
+
+        .switch-holder {
+            display: flex;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: -4px -4px 3px rgb(46, 46, 46, .7),
+                        10px 10px 10px rgba(0,0,0, .3),
+                        inset 4px 4px 10px rgba(46,46,46,.7),
+                        inset 10px 10px 10px rgba(0,0,0, .3);
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .switch-label {
+            width: 150px;
+        }
+        
+        .switch-label i {
+            margin-right: 5px;
+        }
+        
+        .switch-toggle {
+            height: 40px;
+        }
+        
+        .switch-toggle input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            z-index: -2;
+        }
+        
+        .switch-toggle input[type="checkbox"] + label {
+            position: relative;
+            display: inline-block;
+            width: 100px;
+            height: 40px;
+            border-radius: 20px;
+            margin: 0;
+            cursor: pointer;
+            box-shadow: inset -4px -4px 4px rgb(93 91 91 / 73%),
+                        inset 10px 10px 10px rgba(0,0,0, .25);
+            
+        }
+        
+        .switch-toggle input[type="checkbox"] + label::before {
+            position: absolute;
+            content: 'OFF';
+            font-size: 13px;
+            text-align: center;
+            line-height: 25px;
+            top: 8px;
+            left: 8px;
+            width: 45px;
+            height: 25px;
+            border-radius: 20px;
+            background-color: #d1dad3;
+            box-shadow: -3px -3px 5px rgba(255,255,255,.5),
+                        3px 3px 5px rgba(0,0,0, .25);
+            transition: .3s ease-in-out;
+        }
+        @media (prefers-color-scheme: dark) {
+          .switch-toggle input[type="checkbox"] + label::before {
+            background-color: #2a2a2a;
           }
+          .switch-toggle input[type="checkbox"]:checked + label::before {
+            background: linear-gradient(0, #074600, #00b33c);
+          }
+        }
+        .switch-toggle input[type="checkbox"]:disabled + label::before {
+          display: none;
+        }
+        .switch-toggle input[type="checkbox"]:checked + label::before {
+            left: 50%;
+            content: 'ON';
+            color: #fff;
+            background-color: #00b33c;
+            box-shadow: -3px -3px 5px rgba(255,255,255,.5),
+                        3px 3px 5px #00b33c;
+            background: linear-gradient(0, #0e8d00, #01e84e);
+        }
   )");
   String urlSetSwithName = _prefixApiUri + "/setswitchname";
   String urlSetSwith = _prefixApiUri + "/setswitch";
-  _setup.addScript("async function updateRelayName(form, relayNumber) {"
-                   "  const relayName = form.relayName.value;"
-                   "  const response = await fetch('" + urlSetSwithName + "', {"
-                   "    method: 'PUT',"
-                   "    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },"
-                   "    body: 'ID=' + encodeURIComponent(relayNumber) + '&Value=' + encodeURIComponent(relayName)"
-                   "  });"
-                   "  if (!response.ok) {"
-                   "    alert('Error updating relay name');"
-                   "  }"
-                   "}");
-  _setup.addScript("function setState(relayNum, state) {"
-                   "  var xhr = new XMLHttpRequest();"
-                   "  xhr.open('PUT', '" + urlSetSwith + "', true);"
-                   "  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');"
-                   "  xhr.send('Id=' + relayNum + '&State=' + state);"
-                   "}");
+  String urlGetSwith = _prefixApiUri + "/getswitch";
+  _setup.addScript(R"(
+      async function updateRelayState(relayNumber) {
+          const response = await fetch(')" + urlGetSwith + R"(?Id=' + relayNumber, { method: 'GET' });
+          if (!response.ok) {
+              alert('Error fetching relay state');
+              return;
+          }
+          const relayElement = document.getElementById('relay-state-' + relayNumber);
+          relayElement.disabled = false;
+          const responseData = await response.json();
+          relayElement.checked = responseData.Value;
+      }
+      document.addEventListener('DOMContentLoaded', (event) => {
+          // Update states for all relays on page load
+          for(let i = 0; i < )" + String(_controller->getMaxSwitch()) + R"(; i++) {
+              updateRelayState(i);
+              setInterval(() => updateRelayState(i), 5000); // Update every 5 seconds
+          }
+      });
+  )");
+  
+  _setup.addScript(R"(
+      async function toggleRelayState(checkbox, relayNumber) {
+          const state = checkbox.checked ? 'true' : 'false';
+          const response = await fetch(')" + urlSetSwith + R"(', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: 'Id=' + encodeURIComponent(relayNumber) + '&State=' + encodeURIComponent(state)
+          });
+          if (!response.ok) {
+              alert('Error updating relay state');
+          }
+      }
+  )");
+
 }
 void AlpacaSwitchDevice::_doConnect(bool connected) {
   _controller->connect(connected);
@@ -62,18 +163,21 @@ void AlpacaSwitchDevice::handleSetupdevice() {
   _setup.render([this](HttpHandler& server) {
       server.sendContent("<ul class=\"relaylist\">");
       for(int i=0;i<_controller->getMaxSwitch();i++) {
-        server.sendContent("<li class=\"relaylist\">");
-        server.sendContent("<form onsubmit='event.preventDefault(); updateRelayName(this, " + String(i) + ");'>");
-        server.sendContent("<label for='relayName'>Relay " + String(i+1) + ": </label>");
-        server.sendContent("<input type='text' id='relayName' name='relayName' value='" + _controller->getName(i) + "'>");
-        server.sendContent("<input type='submit' value='Update'>");
-        server.sendContent("</form>");
-    
-        server.sendContent("<button type='button' onclick='setState("
-            + String(i) + ", \"true\")'>On</button> ");
-        server.sendContent("<button type='button' onclick='setState("
-            + String(i) + ", \"false\")'>Off</button> ");
-        server.sendContent("</li>");    
+        server.sendContent(R"(
+            <li class='relaylist switch-holder'>
+                <div class='switch-label'>
+                <form onsubmit='event.preventDefault(); updateRelayName(this, )" + String(i) + R"(')>
+                    <label for='relayName'>Relay )" + String(i+1) + R"(: </label>
+                    <input type='text' id='relayName' name='relayName' value=')" + _controller->getName(i) + R"('>
+                    <input type='submit' value='Update'>
+                </form>
+                </div>
+                <div class='switch-toggle'>
+                    <input type='checkbox' id='relay-state-)" + String(i) + R"(' onchange='toggleRelayState(this, )" + String(i) + R"()' disabled>
+                    <label for='relay-state-)" + String(i) + R"('></label>
+                </div>
+            </li>
+        )");  
       }
       server.sendContent("</ul>");
   });
