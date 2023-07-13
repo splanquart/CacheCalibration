@@ -21,6 +21,36 @@ void AlpacaDriver::begin() {
   _server.bind("/setup", HTTP_GET, std::bind(&AlpacaDriver::handleSetup, this));
   
   _server.begin();
+
+  _setup.addStyle(R"(
+    .device-link a, .device-link a {
+        text-decoration: none;
+        color: #cfcaca;
+    }
+    .device-link {
+        background-color: #2b2b2b;
+        background: linear-gradient(0deg, rgb(0 0 0) 0%, rgb(102 102 102) 100%);
+        border: none;
+        color: white;
+        padding: 1em 1.5em;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 0.5em 0.2em;
+        cursor: pointer;
+        border-radius: 1em;
+    }
+    @media (prefers-color-scheme: dark) {
+      .device-link a, .device-link {
+          color: #4b4848;
+      }
+      .device-link {
+          background-color: #ffffff;
+          background: linear-gradient(0deg, rgb(104 104 104) 0%, rgb(217 217 217) 100%);
+      }
+    }
+  )");
   Serial.println("Server started");
 }
 String AlpacaDriver::getSetupUrl() {
@@ -120,7 +150,7 @@ void AlpacaDriver::handleSetup() {
     _setup.render([this](HttpHandler& server) {
       server.sendContent("<h1>Setup main page</h1>");
       for (int i = 0; i < _devices.size(); ++i) {
-        server.sendContent("<a href=\"" + _devices[i]->getDeviceSetupUrl() + "\">Configuration " + _devices[i]->getDeviceName() + "</a><br/>");
+        server.sendContent("<a class=\"device-link\" href=\"" + _devices[i]->getDeviceSetupUrl() + "\">Configuration " + _devices[i]->getDeviceName() + "</a><br/>");
       }
     });
 }
