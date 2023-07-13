@@ -149,6 +149,19 @@ void AlpacaSwitchDevice::begin() {
           }
       }
   )");
+  _setup.addScript(R"--(
+      async function updateRelayName(form, relayNumber) {
+        const relayName = form.relayName.value;
+        const response = await fetch(')--" + urlSetSwithName + R"--(', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'ID=' + encodeURIComponent(relayNumber) + '&Value=' + encodeURIComponent(relayName)
+        });
+        if (!response.ok) {
+          alert('Error updating relay name');
+        }
+      }
+  )--");
 
 }
 void AlpacaSwitchDevice::_doConnect(bool connected) {
@@ -166,7 +179,7 @@ void AlpacaSwitchDevice::handleSetupdevice() {
         server.sendContent(R"(
             <li class='relaylist switch-holder'>
                 <div class='switch-label'>
-                <form onsubmit='event.preventDefault(); updateRelayName(this, )" + String(i) + R"(')>
+                <form onsubmit='event.preventDefault(); updateRelayName(this, )" + String(i) + R"()'>
                     <label for='relayName'>Relay )" + String(i+1) + R"(: </label>
                     <input type='text' id='relayName' name='relayName' value=')" + _controller->getName(i) + R"('>
                     <input type='submit' value='Update'>
