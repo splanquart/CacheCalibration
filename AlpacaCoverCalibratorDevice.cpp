@@ -53,7 +53,7 @@ void AlpacaCoverCalibratorDevice::begin() {
   )");
 
 
-   _setup.addScript(R"(
+   _setup.addScript("var _prefixApiUri = '" + _prefixApiUri + "';\n" R"(
         var coverStateMapping = {
             0: "Cover not present",
             1: "Cover is closed",
@@ -64,48 +64,40 @@ void AlpacaCoverCalibratorDevice::begin() {
         };
 
         function updateCoverState() {
-            var xhttp = new XMLHttpRequest();
-            xhttp.onreadystatechange = function() {
-                if (this.readyState == 4 && this.status == 200) {
-                    var response = JSON.parse(this.responseText);
-                    var coverStateElement = document.getElementById("coverState");
-                    coverStateElement.innerHTML = coverStateMapping[response.Value] || "Unexpected state";
-                    // Clear existing classes
-                    coverStateElement.className = '';
-        
-                    // Add class based on cover state
-                    if (response.Value == 1) {
-                        coverStateElement.className = 'close';
-                    } else if (response.Value == 3) {
-                        coverStateElement.className = 'open';
-                    }
-                    var caoverControls = document.getElementById('coverControls');
-                    if (response.Value === 0) {
-                      caoverControls.classList.add('hidden');
-                      } else {
-                      caoverControls.classList.remove('hidden');
-                    }
+            fetch(_prefixApiUri + "/coverstate")
+            .then(response => response.json())
+            .then(response => {
+                var coverStateElement = document.getElementById("coverState");
+                coverStateElement.innerHTML = coverStateMapping[response.Value] || "Unexpected state";
+                // Clear existing classes
+                coverStateElement.className = '';
+    
+                // Add class based on cover state
+                if (response.Value == 1) {
+                    coverStateElement.className = 'close';
+                } else if (response.Value == 3) {
+                    coverStateElement.className = 'open';
                 }
-            };
-            xhttp.open("GET", "/api/v1/covercalibrator/0/coverstate", true);
-            xhttp.send();
+                var coverControls = document.getElementById('coverControls');
+                if (response.Value === 0) {
+                    coverControls.classList.add('hidden');
+                } else {
+                    coverControls.classList.remove('hidden');
+                }
+            });
         }
         setInterval(updateCoverState, 2000);
         updateCoverState();
 
-        document.getElementById("openCover").onclick = function() {
-            var xhttp = new XMLHttpRequest();
-            xhttp.open("PUT", "/api/v1/covercalibrator/0/opencover", true);
-            xhttp.send();
-        }
-        document.getElementById("closeCover").onclick = function() {
-            var xhttp = new XMLHttpRequest();
-            xhttp.open("PUT", "/api/v1/covercalibrator/0/closecover", true);
-            xhttp.send();
-        }
+        document.getElementById("openCover").addEventListener('click', function() {
+            fetch(_prefixApiUri + "/opencover", {method: 'PUT'});
+        });
+        document.getElementById("closeCover").addEventListener('click', function() {
+            fetch(_prefixApiUri + "/closecover", {method: 'PUT'});
+        });
     )");
 
-  _setup.addScript(R"---(
+  _setup.addScript("var _prefixApiUri = '" + _prefixApiUri + "';\n" R"---(
         function updateCalibratorState() {
           var calibratorStateMapping = {
             0: "The device does not have a calibration capability",
@@ -116,7 +108,7 @@ void AlpacaCoverCalibratorDevice::begin() {
             5: "The calibrator encountered an error when changing state"
           };
         
-          fetch('/api/v1/covercalibrator/0/calibratorstate')
+          fetch(_prefixApiUri + '/calibratorstate')
             .then(response => response.json())
             .then(data => {
               var stateText = calibratorStateMapping[data.Value] || "Unknown";
@@ -136,7 +128,7 @@ void AlpacaCoverCalibratorDevice::begin() {
             brightness: 100
           });
         
-          fetch('/api/v1/covercalibrator/0/calibratoron', { 
+          fetch(_prefixApiUri + '/calibratoron', { 
             method: 'PUT',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded'
@@ -147,7 +139,7 @@ void AlpacaCoverCalibratorDevice::begin() {
         }
   
         function calibratorOff() {
-          fetch('/api/v1/covercalibrator/0/calibratoroff', { method: 'PUT' })
+          fetch(_prefixApiUri + '/calibratoroff', { method: 'PUT' })
             .then(() => updateCalibratorState());
         }
   
@@ -155,7 +147,32 @@ void AlpacaCoverCalibratorDevice::begin() {
         setInterval(updateCalibratorState, 2000);
         updateCalibratorState();  // Also update on page load
     )---");
-  
+    _setup.addScript("var _prefixApiUri = '" + _prefixApiUri + "';\n" R"(
+    function updateBrightness() {
+        let maxBrightness, currentBrightness;
+
+        fetch(_prefixApiUri + '/maxbrightness')
+        .then(response => response.json())
+        .then(data => {
+            maxBrightness = data.Value;
+
+            return fetch(_prefixApiUri + '/brightness');
+        })
+        .then(response => response.json())
+        .then(data => {
+            currentBrightness = data.Value;
+
+            const brightnessElement = document.getElementById('brightness');
+            brightnessElement.max = maxBrightness;
+            brightnessElement.value = currentBrightness;
+            const brightnessValueElement = document.getElementById('brightnessValue');
+            brightnessValueElement.innerText = currentBrightness;
+        });
+    }
+
+    setInterval(updateBrightness, 2000);
+    updateBrightness();
+  )");
 }
 
 void AlpacaCoverCalibratorDevice::_doConnect(bool connected) {
@@ -185,6 +202,12 @@ void AlpacaCoverCalibratorDevice::handleSetupdevice() {
             <button onclick="calibratorOff()">Turn Off</button>
             <button onclick="calibratorOn()">Turn On</button>
           </div>
+        </div>
+
+        <div id="brightnessBlock">
+          <label for="brightness">Brightness: </label>
+          <progress id="brightness" max="100" value="0"></progress>
+          <span id="brightnessValue">&nbsp;</span>
         </div>
       )---");
   });
