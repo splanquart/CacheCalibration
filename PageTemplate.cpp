@@ -49,13 +49,14 @@ void PageTemplate::setTitle(String title) {
 }
 void PageTemplate::render(std::function<void(HttpHandler&)> renderContent) {
     _server.sendContent("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
-    _server.sendContent("<html>");
+    _server.sendContent("<html><head>");
     _server.sendContent("<meta charset=\"UTF-8\">");
     _server.sendContent("<meta name=\"color-scheme\" content=\"dark light\">");
     _server.sendContent(R"(
     <meta name="viewport" content="width=device-width, initial-scale=1">
     )"); 
     renderStyle();
+    _server.sendContent("</head>\r\n");
     _server.sendContent("<body>\r\n");
     _server.sendContent("    <h1>");
     _server.sendContent(_title);
