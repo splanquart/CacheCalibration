@@ -31,6 +31,8 @@ void AlpacaSwitchDevice::begin() {
             padding-left: 0;
             border: none;
         }
+    )");
+   _setup.addStyle(R"(
 
         .switch-holder {
             display: flex;
@@ -91,6 +93,8 @@ void AlpacaSwitchDevice::begin() {
                         3px 3px 5px rgba(0,0,0, .25);
             transition: .3s ease-in-out;
         }
+    )");
+   _setup.addStyle(R"(
         @media (prefers-color-scheme: dark) {
           .switch-toggle input[type="checkbox"] + label::before {
             background-color: #2a2a2a;
