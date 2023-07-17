@@ -36,7 +36,7 @@ void setup() {
   delay(10);
   WiFiManager wifiManager;
   // Démarrer le WiFiManager
-  // Si la connexion échoue, le point d'accès "AutoConnectAP" sera créé
+  // Si la connexion échoue, le point d'accès "Cache_Calibration" sera créé
   // Vous pouvez utiliser votre téléphone pour vous connecter à ce point d'accès et configurer le SSID et le mot de passe
   if (!wifiManager.autoConnect("Cache_Calibration")) {
     Serial.println("Échec de la connexion, redémarrage...");

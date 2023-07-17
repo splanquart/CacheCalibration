@@ -5,9 +5,31 @@ AlpacaDevice::AlpacaDevice(HttpHandler& server, int deviceNumber, String deviceT
     _uniqueId = _generateUniqueId(_alpacaDeviceType, _deviceNumber);
     _deviceName = _deviceName + "_" + _uniqueId;
     _setup.addStyle(R"(
-    .home-link {
-      text-decoration: none;
-    }
+      .home-link {
+        text-decoration: none;
+      }
+    )");
+    _setup.addStyle(R"(
+      .block-holder {
+          display: flex;
+          padding: 10px 20px;
+          border-radius: 10px;
+          box-shadow: -4px -4px 3px rgb(200 200 200 / 70%),
+                      10px 10px 10px rgb(200 200 200 / 30%),
+                      inset 4px 4px 10px rgb(200 200 200 / 70%),
+                      inset 10px 10px 10px rgb(200 200 200 / 30%);
+          justify-content: space-between;
+          align-items: center;
+          margin: 1em 0em;
+      }
+      @media (prefers-color-scheme: dark) {
+        .block-holder {
+          box-shadow: -4px -4px 3px rgb(46, 46, 46, .7),
+                      10px 10px 10px rgba(0,0,0, .3),
+                      inset 4px 4px 10px rgba(46,46,46,.7),
+                      inset 10px 10px 10px rgba(0,0,0, .3);
+        }
+      }
     )");
 }
 

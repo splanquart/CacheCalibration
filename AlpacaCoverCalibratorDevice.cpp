@@ -37,9 +37,12 @@ void AlpacaCoverCalibratorDevice::begin() {
     }
     ul form {
         margin-bottom: 0em;
-    }    
-    span#coverState {
+    }
+    #coverState {
         padding: 0 1em;
+        background: linear-gradient(0deg, #00000091, #00000033);
+        text-shadow: 1px 1px 2px #151515;
+        color: white;
     }
     #coverState.open {
       background-color: #05a900;
@@ -49,6 +52,12 @@ void AlpacaCoverCalibratorDevice::begin() {
     }
     .hidden > * {
       display: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      #coverState {
+          background: linear-gradient(0deg, #00000091, #00000033);
+          text-shadow: none;
+      }
     }
   )");
 
@@ -188,7 +197,7 @@ void AlpacaCoverCalibratorDevice::handleSetupdevice() {
   _server.logRequest(__func__);
   _setup.render([this](HttpHandler& server) {
       _server.sendContent(R"---(
-        <div id="coverBlock">
+        <div id="coverBlock" class="block-holder">
           <span id="coverState">Unknown</span><br/>
           <div id="coverControls">
             <button id="openCover">Open Cover</button>
@@ -196,19 +205,22 @@ void AlpacaCoverCalibratorDevice::handleSetupdevice() {
           </div>
         </div>
 
-        <div id="calibratorState">
-          <p><span id="state">Unknown</span></p>
+        <div id="calibratorState" class="block-holder">
+          <div>
+            <span id="state">Unknown</span>
+            <div id="brightnessBlock">
+              <label for="brightness">Brightness: </label>
+              <progress id="brightness" max="100" value="0"></progress>
+              <span id="brightnessValue">&nbsp;</span>
+            </div>
+          </div>
           <div id="calibratorControls">
             <button onclick="calibratorOff()">Turn Off</button>
             <button onclick="calibratorOn()">Turn On</button>
           </div>
         </div>
 
-        <div id="brightnessBlock">
-          <label for="brightness">Brightness: </label>
-          <progress id="brightness" max="100" value="0"></progress>
-          <span id="brightnessValue">&nbsp;</span>
-        </div>
+
       )---");
   });
 }

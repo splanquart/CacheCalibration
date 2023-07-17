@@ -33,19 +33,6 @@ void AlpacaSwitchDevice::begin() {
         }
     )");
    _setup.addStyle(R"(
-
-        .switch-holder {
-            display: flex;
-            padding: 10px 20px;
-            border-radius: 10px;
-            box-shadow: -4px -4px 3px rgb(46, 46, 46, .7),
-                        10px 10px 10px rgba(0,0,0, .3),
-                        inset 4px 4px 10px rgba(46,46,46,.7),
-                        inset 10px 10px 10px rgba(0,0,0, .3);
-            justify-content: space-between;
-            align-items: center;
-        }
-        
         .switch-label {
             width: 150px;
         }
@@ -181,7 +168,7 @@ void AlpacaSwitchDevice::handleSetupdevice() {
       server.sendContent("<ul class=\"relaylist\">");
       for(int i=0;i<_controller->getMaxSwitch();i++) {
         server.sendContent(R"(
-            <li class='relaylist switch-holder'>
+            <li class='relaylist block-holder'>
                 <div class='switch-label'>
                 <form onsubmit='event.preventDefault(); updateRelayName(this, )" + String(i) + R"()'>
                     <label for='relayName'>Relay )" + String(i+1) + R"(: </label>
