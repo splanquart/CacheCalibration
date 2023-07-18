@@ -106,7 +106,7 @@ void AlpacaCoverCalibratorDevice::begin() {
         });
     )");
 
-  _setup.addScript("var _prefixApiUri = '" + _prefixApiUri + "';\n" R"---(
+    _setup.addScript(R"---(
         function updateCalibratorState() {
           var calibratorStateMapping = {
             0: "The device does not have a calibration capability",
@@ -130,8 +130,8 @@ void AlpacaCoverCalibratorDevice::begin() {
                 calibratorControls.classList.remove('hidden');
               }
             });
-        }
-  
+        })---");
+    _setup.addScript(R"---(
         function calibratorOn() {
           const params = new URLSearchParams({
             brightness: 100
@@ -145,8 +145,8 @@ void AlpacaCoverCalibratorDevice::begin() {
             body: params
           })
           .then(() => updateCalibratorState());
-        }
-  
+        })---");
+    _setup.addScript("var _prefixApiUri = '" + _prefixApiUri + "';\n" R"---(
         function calibratorOff() {
           fetch(_prefixApiUri + '/calibratoroff', { method: 'PUT' })
             .then(() => updateCalibratorState());
